@@ -1,5 +1,18 @@
-### IBM MQ Channel common issues ,Reasons and solutions
+## 📌 IBM MQ Channel Troubleshooting & Solutions Guide
 
-#Here in this post We attempt here to put a Checklist of problems and solutions for WebSphere MQ channel issues. 
+This repository contains most common MQ Channel issues, root-cause guides, configuration references, and ready-to-use scripts for fixing connectivity, SSL/TLS, CHLAUTH, network, and retry problems in IBM MQ.
 
-#In case of channel issues, this document would help in diagnosing the problem.
+---
+
+## 📚 What’s Inside?
+
+| Category | Description | Examples Included |
+|---------|-------------|------------------|
+| 🔗 Channel Connectivity | Fix sender/receiver channel failure | Connection refused, Unknown MQRC, 2538, 2059 |
+| 🔐 SSL / TLS Issues | Cert errors, Cipher mismatch, DN mapping | AMQ9637, AMQ9642, handshake fails |
+| 🧱 CHLAUTH Security | Block/Allow rules, IP issues | MCAUSER mapping denied |
+| 🌐 Network & Firewall | Open ports & DNS troubleshooting | MQRC 2397, NAT issues |
+| 🔁 Retry & Bouncing Channels | Reduce flapping & retry delays | SHORTTMR, LONGRTY configs |
+| 📝 Scripts | Instant diagnostics & fixes | runmqsc helper scripts |
+
+---
