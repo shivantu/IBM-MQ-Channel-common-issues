@@ -1,0 +1,289 @@
+=================================
+AUTHOR: Shivaraj
+VERSION: 1.0
+CREATED: October 2024
+GITHUB: github.com/shivantu
+=================================
+
+
+IBM MQ Channel common issues ,Reasons and solutions
+
+Here in this post We attempt here to put a Checklist of problems and solutions for WebSphere MQ channel issues. 
+In case of channel issues, this document would help in diagnosing the problem.
+
+Channel issues can be broadly classified into 3 categories:-
+
+Channel not starting.
+Unexpected channel termination.
+-----------------------------------------------------------------------------
+Causes for Channel not starting:-
+Channel definition problem, inappropriate naming 
+
+Symptom 
+Queue manager error log of the sender side channel report  
+AMQ9520: Channel not defined remotely
+
+Reason 
+For a channel pair, both sides of the channel should have the same name.
+This error occurs when WMQ does not find a channel pair of same name on the peer.   
+
+Solution 
+Ensure the channel names are same on both ends of the channel and channel definition is appropriate.
+---------------------------------------------------------------
+
+Listener is not running at the receiver side
+
+Symptom 
+Queue manager error log of the sender side channel report 
+AMQ9202: Remote host ‘localhost (127.0.0.1) (1415)’ not available, retry later. 
+
+Reason 
+A Listener on the receiver side is not running at the port specified in the CONNAME parameter of the sender channel definition.
+
+ Solution
+Check whether the Listener is running or not. If found running, 
+verify whether it is running at same port as specified in the CONNAME parameter of the sender channel definition.
+
+---------------------------------------------------
+Remote Queue manager not available 
+
+Symptom 
+Queue manager error log of the sender side channel report  
+AMQ9524: Remote queue manager unavailable.
+
+Reason 
+istener could be running but queue manager on the remote side is down. 
+
+Solution
+Ensure remote queue manager is running.
+
+----------------------------------------------------
+Receiver channel is in STOPPED state
+
+Symptom
+Queue manager error log of the sender side report 
+AMQ9558: The remote channel ‘QM1.TO.QM2’ is not currently available.
+
+Reason 
+For a sender channel to get running, the receiver side channel should not be in STOPED state. 
+The sender channel will move to INACTIVE state if the Receiver channel status is in STOPED state during the channel startup.  
+
+Solution
+Check the channel status on the remote side (Receiver). If the receiver channel is in STOPED state, start the receiver channel. Now start the channel on the sender side.
+
+--------------------------------------
+Channel in Starting State
+
+Symptom
+Queue Manager Error log on the sender side reports 
+AMQ9573: Maximum number of active channels reached. 
+
+Reason 
+If a channel state resides in STARTING state for a long time, it indicates that the corresponding channel process failed to complete its startup routine.
+Refer the queue manager error log for the reasons. 
+One of the reasons is Max Active channel reached. 
+
+Solution
+There are two attributes that restricts the number of channels on a queue manager, Max channel and Max active channel.
+Max Channel is for maximum number of channels that can be created for that queue manager (including server-connection channels). 
+Max active channel is maximum number of channels that can be active at any time. Increase the max channels or max active channels parameters if required.  
+--------------------------------------------------
+Channel in Binding state 
+
+Symptom
+Channel status shows as BINDING
+
+Reason 
+In an ideal scenario, where a START CHANNEL command is executed to start a channel, the channel goes from INITILISING, 
+STARTING, BINDING and then to RUNNING state. During the BINDING state, the channel connects to its remote pair for the initial handshake. 
+During this process, the channel negotiates on several parameters like FAP Level, Batch size, Max transmission size, Max message size, Heart beat etc.  
+Any problem at this stage can make the channel remain in BINDING state.
+Queue manager error log can provide precise information about the route cause of channel being in BINDING state.
+Refer Channel States from Intercommunication manual for details on flow between channel states.
+
+Solution
+Take appropriate action based on the queue manager error log information.
+-------------------------------------------------
+Authority Error
+Symptom 
+If an attempt to start channel fails with authority error like AMQ8077, AMQ9254, and AMQ9557.
+E.g.: AMQ8077: Entity ‘test’ has insufficient authority to access object ‘QM2’.
+
+Reason 
+Te user IDs associated with message channel agents (MCA) need authority to access various WebSphere MQ resources like 
+MCA must be able to connect to a queue manager and open the dead letter queue. 
+A sending MCA must be able to open the transmission queue for the channel. 
+A receiving MCA must be able to open destination queues and set context information for the messages that it puts to those queues. 
+The user ID that is used for authority checks depends on whether the MCA is connecting to a queue manager or accessing queue manager resources after it has connected to a queue manager.
+The user ID for connecting to a queue manager
+On i5/OS, UNIX systems, and Windows systems, the user ID whose authority is checked when an MCA connects to a queue manager is the one under which the MCA runs. This is known as the default user ID of the MCA. The default user ID is derived in various ways. 
+
+Here are some examples:
+If a caller MCA is started by a channel initiator, the MCA runs under the same user ID as that of the channel initiator. 
+This user ID might be derived in various ways. For example, if the channel initiator is started by using the WebSphere MQ Explorer, it runs under the MUSR_MQADMIN user ID. 
+This user ID is created when you install WebSphere MQ for Windows and is a member of the mqm group. 
+If a responder MCA is started by a WebSphere MQ listener, the MCA runs under the same user ID as that of the listener. 
+
+---------------------------
+The user ID for subsequent authority checks: 
+After an MCA has connected to a queue manager, the subsequent security checks might be done against a different MCA ID than the one used for queue manager connection.
+Here are some examples of other user IDs that might be used:
+
+The value of the MCAUSER parameter in the channel definition.
+For a channel to which the PUTAUT parameter applies, if PUTAUT is set to CTX (or, on z/OS only, ALTMCA), 
+the user ID in the User Identifier field in the message descriptor of each incoming message.
+On an MQI channel, the user ID associated with the server connection MCA needs authority to issue MQI calls on behalf of the client application. 
+The user ID used by the MCA are those contained in the MCAUserIdentfier field of the MCD. The contents of these fields are determined by one of the below:-
+
+If security exit is provided, the user id field can be set by the exit. otherwise
+If MCAUSER user is non blank, then this will be used.  
+If MCAUSER is blank, the userid received from the client (the user running the application) is used. 
+
+Solution 
+Ensure that the appropriate MCA user ID is used and it has the required authorities to access various WebSphere MQ resources.
+
+---------------------------------------------------------
+Channels is in-doubt, Sequence number mismatch 
+
+Symptom
+WebSphere MQ sender channel goes to INDOUBT state 
+
+Reason 
+An in-doubt channel is a channel that is having confusion with a remote channel about the messages that have been sent and received.
+WebSphere MQ sender channel after sending a batch of persistent messages sends a commit request to the partner and waits for its confirmation. On receiving the confirmation, 
+the batch is finally committed. 
+If the partner fails to send a confirmation, the sender channel will remain in INDOUBT state.
+In-doubt status and the units of work involved are resolved automatically between MCAs when a channel is restarted. There are some circumstances where you may want/need to resolve it manually. 
+
+Solution 
+To resolve channel INDOUBT issue manually, use RESOLVE CHANNEL command. To do that, perform display channel status (saved) on both sides to identify the following
+DISPLAY CHSTATUS (channel name) SAVED CURLUWID
+DISPLAY CHSTATUS (channel name) SAVED LSTLUWID
+
+If receiver and sender have same Last LUWID use RESOLVE CHANNEL ACTION (COMMIT) for sender channel. 
+If receiver and sender channel do not have same Last LUWID 
+
+RESOLVE CHANNEL ACTION (BACKOUT) for sender channel.
+If there are mismatch in sequence number errors, use RESET CHANNEL SEQNUM command to re-synchronize. 
+-------------------------------------------
+Network problem 
+
+Symptom
+An attempt to start the channel fails with TCP/IP error like 
+
+AMQ9213: A communications error for TCP/IP occurred. 
+Reason 
+
+WMQ Channel depends on networking protocol stacks, such as TCP/IP, SNA etc and network card interface software. 
+Once the data packet has left the computer it travels along routers and gateways and will arrive at the destination queue manager.
+It is important to understand that there are many layers and components sitting between the sender channel and the receiver channel. 
+These are independent of WMQ, they could be problem in the below layer as well which would first appear to be problem with channel. 
+
+Solution 
+Refer the Queue manager error log to see if the errors could be due to n/w errors. 
+Take appropriate action based on the queue manager error log information. If required get the network administrator involved for analysis of network failures.
+------------------------------------------------------------
+Data Conversion problem (Incompatible CCSID): – 
+
+Symptom
+An attempt to start the channel would fail with 
+AMQ9541:  CCSID supplied for data conversion not supported. 
+
+Reason 
+When a channel between two WebSphere MQ Queue Managers is started, the Queue Managers will negotiate a CCSID and encoding protocol that they will use for communication. 
+This CCSID and encoding scheme is then used for encoding the WebSphere MQ TSH and the Message Descriptor. If the CONVERT (YES) parameter is specified on the SENDER channel, 
+WebSphere MQ will convert the data to the CCSID of the target queue manager. If the conversions between the queue managers CCSIDs are not compatible, an attempt to start the channel would fail with AMQ9541 
+
+Solution 
+Refer Application Programming reference for supported conversion on various platforms and make appropriate changes. 
+Channel Exit problems When exits are in place, make sure they have suitable error reporting mechanisms to assist problem diagnosis. 
+The use of inappropriate/incorrect exit might be a reason for channel startup issues.
+
+------------------------------------------------------------------
+SSL setup problems 
+
+Symptom
+ An attempt to start SSL channel fails with SSL errors like 
+AMQ9637: Channel is lacking a certificate.
+AMQ9631: The CipherSpecs on the two ends of channel ‘QM1.TO.QM2’ do not match.
+
+Reason 
+ If channel is SSL enabled some of the common problems are
+Lacking personal certificate or CA certificate
+  For two way authentication (SSLCAUTH on the sender side channel is  set to REQUIRED), 
+the following certificates are required on both sides of the queue manager’s key store database
+
+1) Personal certificate with label prefix ibmwebspheremq (in lower case) followed by the name of the queue manager.
+2) CA certificate which has signed the personal certificate of the queue manager.
+3) CA certificate which has signed the personal certificate of the remote queue manager..
+
+For one way authentication (SSLCAUTH on the sender side channel set to OPTIONAL), the following certificates are needed on the sender side  queue manager’s key store database
+
+1) Personal certificate with label prefix ibmwebspheremq (in lower case) followed by the name of the queue manager.
+2) CA certificate which has the signed the personal certificate of the queue manager
+
+The following certificate is required on the receiver side queue manager’s key store database
+
+1) CA certificate which has signed the personal certificate of the sender side queue manager
+
+Certificate expiry. 
+
+Personal certificate with incorrect label
+
+  For the queue manager, ensure the personal certificate label format is “ibmwebspheremq” followed by the name of your queue manager name 
+
+e.g.:- ibmwebspheremqqm where qm is the queue manager name. 
+
+For WMQ Client, personal certificate label format is ibmwebspheremq followed by logon user ID 
+
+e.g.:- ibmwebspheremqmyuserid where “myuserid” is the logon user ID.
+
+-------------------------------------------------------------
+
+CipherSpech mismatch for channel pair
+
+  Both ends of a WebSphere MQ SSL channel definition must include the SSLCIPH attribute and its values must specify the same CipherSpec on both ends of the channel. In case of CipherSpec mismatch, the SSL      handshake fails. 
+
+Solution 
+Take appropriate action based on the queue manager error log information. 
+-----------------------------------
+Causes for Channel termination.
+
+Remote queue manager down
+Check the listener and remote queue manager is running fine. Check for any error on local and remote queue manager error log.
+
+---------------------------------------
+Disconnect Interval reached and Channel became Inactive:- 
+
+Symptom
+Running channel goes to INACTIVE state.
+
+Reason 
+The disconnect interval (DISCINT) attributes of the channel can cause a session to expire. 
+The disconnect interval is the time frame after which a channel will close down if no message arrives on the transmission queue during the period of time specified by DISCINT.
+
+There are couples of channel attributes that can be used to control channel behavior.
+
+Heartbeat interval (HBINT) HBINT is the time interval in which the heart beat messages are sent.  
+Heart beat messages are the messages passed from a sending MCA when there are no messages on the transmission queue for a period of time. 
+Heartbeat helps the sender discover a network outage. 
+
+Keep Alive Interval (KAINT):- The Keep Alive Interval attribute is used to specify a time-out value for a channel. 
+For this attribute to have any effect, TCP/IP keep alive must be enabled.
+
+Network problem: If there is any network related error, involve the network administrator for analysis.
+
+Docs to collect in case of any channel issue
+
+----------------------------------------
+For channel related problem, the following docs are required.
+
+RUNMQSC output of 
+DIS CHANNEL(<Channel Name>)  
+DIS CHANNEL(<Channel Name>) STATUS
+Detail WMQ trace captured on both the ends of the problem along with COMM trace (depends on the problem)
+All WMQ error logs
+FDCs if any
+TCP/IP trace 
+
+Most of the MQ channel issues are covered above . This will help to diagnose most of the channels issue .
