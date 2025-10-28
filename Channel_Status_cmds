@@ -1,0 +1,68 @@
+## 🔗 IBM MQ Channel Troubleshooting — Quick Commands Cheat-Sheet
+
+### ✅ Channel Status & Monitoring
+
+DISPLAY CHSTATUS(*)
+DISPLAY CHSTATUS(<CHANNEL_NAME>)
+DISPLAY CHSTATUS(<CHANNEL_NAME>) ALL
+
+
+### ✅ Channel Definition Check
+
+DISPLAY CHANNEL(<CHANNEL_NAME>) ALL
+DISPLAY CHANNEL(<CHANNEL_NAME>) CONNAME
+
+
+### ✅ Start / Stop Channels
+
+START CHANNEL(<CHANNEL_NAME>)
+STOP CHANNEL(<CHANNEL_NAME>) STATUS(INACTIVE)
+STOP CHANNEL(<CHANNEL_NAME>) STATUS(STOPPED)
+STOP CHANNEL(<CHANNEL_NAME>) MODE(FORCE)
+
+
+### ✅ Reset Channel Seq Numbers
+
+RESET CHANNEL(<CHANNEL_NAME>) SEQNUM(1)
+
+
+### ✅ SSL / TLS Channel Checks
+
+DISPLAY CHANNEL(<CHANNEL_NAME>) SSLCIPH
+DISPLAY CHSTATUS(<CHANNEL_NAME>) SSLPEER
+DISPLAY QMGR SSLKEYR
+REFRESH SECURITY TYPE(SSL)
+
+
+### ✅ CHLAUTH Debugging
+
+DISPLAY CHLAUTH(*)
+DISPLAY CHLAUTH(<CHANNEL_NAME>) ALL
+DISPLAY CHSTATUS(<CHANNEL_NAME>) MCAUSER
+ALTER QMGR CHLAUTH(DISABLED)   # Only for testing!
+
+
+### ✅ Network & Connectivity Troubleshooting
+
+ping <remote_host>
+telnet <remote_host> <port>
+
+Check MQ listener:
+
+DISPLAY LSSTATUS(<LISTENER>) ALL
+STOP LISTENER(<LISTENER>)
+START LISTENER(<LISTENER>)
+
+
+### ✅ Logs & Queue Depth
+
+tail -f /var/mqm/errors/AMQERR01.LOG
+tail -f /var/mqm/qmgrs/<QMGR>/errors/AMQERR01.LOG
+DISPLAY QLOCAL(SYSTEM.DEAD.LETTER.QUEUE) CURDEPTH
+
+
+### ✅ Retry / Bounce Control
+
+ALTER CHANNEL(<CHANNEL_NAME>) SHORTTMR(60)
+ALTER CHANNEL(<CHANNEL_NAME>) LONGRTY(999999)
+
