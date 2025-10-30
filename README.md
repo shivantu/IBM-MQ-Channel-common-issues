@@ -3,6 +3,9 @@
 This repository contains most common MQ Channel issues, root-cause guides, configuration references, and ready-to-use scripts for fixing connectivity, SSL/TLS, CHLAUTH, network, and retry problems in IBM MQ.
 
 ---
+© 2025 Shivaraj — All Rights Reserved.  
+
+---
 
 ## 📚 What’s Inside?
 
@@ -14,5 +17,12 @@ This repository contains most common MQ Channel issues, root-cause guides, confi
 | 🌐 Network & Firewall | Open ports & DNS troubleshooting | MQRC 2397, NAT issues |
 | 🔁 Retry & Bouncing Channels | Reduce flapping & retry delays | SHORTTMR, LONGRTY configs |
 | 📝 Scripts | Instant diagnostics & fixes | runmqsc helper scripts |
+
+---
+
+## 📞 Contact
+- shivaraj
+- shivantu9@gmail.com
+- For questions or contributions, please reach out via GitHub issues.
 
 ---
